@@ -172,9 +172,10 @@ var technologiesData = map[Technology]TechData{
 	Docker: {},
 	Oci:    {},
 	Conan: {
-		indicators:         []string{"conanfile.txt", "conanfile.py "},
-		packageDescriptors: []string{"conanfile.txt", "conanfile.py "},
-		formal:             "Conan",
+		indicators:                 []string{"conanfile.txt", "conanfile.py "},
+		packageDescriptors:         []string{"conanfile.txt", "conanfile.py "},
+		packageInstallationCommand: "install",
+		formal:                     "Conan",
 	},
 }
 
