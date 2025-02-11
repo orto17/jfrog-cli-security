@@ -233,15 +233,16 @@ func DownloadAnalyzerManagerIfNeeded(threadId int) error {
 }
 
 func getAnalyzerManagerRemoteDetails(downloadPath string) (server *config.ServerDetails, fullRemotePath string, err error) {
-	var remoteRepo string
-	server, remoteRepo, err = dependencies.GetRemoteDetails(coreutils.ReleasesRemoteEnv)
-	if err != nil {
-		return
-	}
-	if remoteRepo != "" {
-		fullRemotePath = path.Join(remoteRepo, "artifactory", downloadPath)
-		return
-	}
+	//var remoteRepo string
+	//server, remoteRepo, err = dependencies.GetRemoteDetails(coreutils.ReleasesRemoteEnv)
+	//if err != nil {
+	//	return
+	//}
+	//if remoteRepo != "" {
+	//	fullRemotePath = path.Join(remoteRepo, "artifactory", downloadPath)
+	//	return
+	//}
+	log.Info("Downloading Analyzer Manager from releases.jfrog.io.")
 	log.Debug("'" + coreutils.ReleasesRemoteEnv + "' environment variable is not configured. The Analyzer Manager app will be downloaded directly from releases.jfrog.io if needed.")
 	// If not configured to download through a remote repository in Artifactory, download from releases.jfrog.io.
 	return &config.ServerDetails{ArtifactoryUrl: coreutils.JfrogReleasesUrl}, downloadPath, nil
