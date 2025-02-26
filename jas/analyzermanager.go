@@ -238,6 +238,7 @@ func getAnalyzerManagerRemoteDetails(downloadPath string) (server *config.Server
 	if err != nil {
 		return
 	}
+	log.Info("JFROG_CLI_RELEASES_REPO value: " + remoteRepo)
 	if remoteRepo != "" {
 		fullRemotePath = path.Join(remoteRepo, "artifactory", downloadPath)
 		return
