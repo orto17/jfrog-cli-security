@@ -230,9 +230,9 @@ func DownloadAnalyzerManagerIfNeeded(threadId int) error {
 			return err
 		}
 		log.Info("sha2 value of checksumFilePath: " + string(sha2))
-		log.Info("sha2 value of emoteFileDetails.Checksum.Sha256: " + string(remoteFileDetails.Checksum.Sha256))
+		log.Info("sha2 value of remoteFileDetails.Checksum.Sha256: " + string(remoteFileDetails.Checksum.Sha256))
 		// If the checksums are identical, there's no need to download.
-		if remoteFileDetails.Checksum.Sha256 == string(sha2) {
+		if strings.TrimSpace(remoteFileDetails.Checksum.Sha256) == strings.TrimSpace(string(sha2)) {
 			return nil
 		}
 	}
