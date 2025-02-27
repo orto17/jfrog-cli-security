@@ -184,6 +184,7 @@ func GetAnalyzerManagerExitCode(err error) int {
 // Download the latest AnalyzerManager executable if not cached locally.
 // By default, the zip is downloaded directly from jfrog releases.
 func DownloadAnalyzerManagerIfNeeded(threadId int) error {
+	log.Info("start running DownloadAnalyzerManagerIfNeeded()")
 	downloadPath, err := GetAnalyzerManagerDownloadPath()
 	if err != nil {
 		return err
@@ -199,7 +200,13 @@ func DownloadAnalyzerManagerIfNeeded(threadId int) error {
 		return err
 	}
 	downloadUrl := artDetails.ArtifactoryUrl + remotePath
+	log.Info("downloadUrl: " + downloadUrl)
 	remoteFileDetails, _, err := client.GetRemoteFileDetails(downloadUrl, &httpClientDetails)
+	if remoteFileDetails != nil {
+		log.Info("remoteFileDetails sha: " + remoteFileDetails.Checksum.Sha256)
+	} else {
+		log.Info("remoteFileDetails is nil. cant log its sha details")
+	}
 	if err != nil {
 		return fmt.Errorf("couldn't get remote file details for %s: %s", downloadUrl, err.Error())
 	}
@@ -209,16 +216,21 @@ func DownloadAnalyzerManagerIfNeeded(threadId int) error {
 	}
 	// Find current AnalyzerManager checksum.
 	checksumFilePath := filepath.Join(analyzerManagerDir, dependencies.ChecksumFileName)
+	log.Info("analyzer manager Checksum file path: " + checksumFilePath)
+
 	exist, err := fileutils.IsFileExists(checksumFilePath, false)
 	if err != nil {
 		return err
 	}
 	if exist {
+		log.Info("checksum file exists")
 		var sha2 []byte
 		sha2, err = fileutils.ReadFile(checksumFilePath)
 		if err != nil {
 			return err
 		}
+		log.Info("sha2 value of checksumFilePath: " + string(sha2))
+		log.Info("sha2 value of emoteFileDetails.Checksum.Sha256: " + string(remoteFileDetails.Checksum.Sha256))
 		// If the checksums are identical, there's no need to download.
 		if remoteFileDetails.Checksum.Sha256 == string(sha2) {
 			return nil
