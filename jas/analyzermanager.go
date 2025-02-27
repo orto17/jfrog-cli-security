@@ -218,7 +218,7 @@ func DownloadAnalyzerManagerIfNeeded(threadId int) error {
 	checksumFilePath := filepath.Join(analyzerManagerDir, dependencies.ChecksumFileName)
 	log.Info("analyzer manager Checksum file path: " + checksumFilePath)
 
-	exist, err := fileutils.IsFileExists(checksumFilePath, false)
+	exist, err := IsFileExists(checksumFilePath, false)
 	if err != nil {
 		return err
 	}
@@ -259,4 +259,34 @@ func getAnalyzerManagerRemoteDetails(downloadPath string) (server *config.Server
 	log.Debug("'" + coreutils.ReleasesRemoteEnv + "' environment variable is not configured. The Analyzer Manager app will be downloaded directly from releases.jfrog.io if needed.")
 	// If not configured to download through a remote repository in Artifactory, download from releases.jfrog.io.
 	return &config.ServerDetails{ArtifactoryUrl: coreutils.JfrogReleasesUrl}, downloadPath, nil
+}
+
+func GetFileInfo(path string, preserveSymLink bool) (fileInfo os.FileInfo, err error) {
+	if preserveSymLink {
+		fileInfo, err = os.Lstat(path)
+	} else {
+		fileInfo, err = os.Stat(path)
+	}
+	// We should not do CheckError here, because the error is checked by the calling functions.
+	return
+}
+
+// Check if path points at a file.
+// If path points at a symlink and `preserveSymLink == true`,
+// function will return `true` regardless of the symlink target
+func IsFileExists(path string, preserveSymLink bool) (bool, error) {
+	fileInfo, err := GetFileInfo(path, preserveSymLink)
+	if fileInfo != nil {
+		log.Info("file info: " + fileInfo.Name())
+	} else {
+		log.Info("file info is nil")
+	}
+	if err != nil {
+		log.Info("error: " + err.Error())
+		if os.IsNotExist(err) { // If doesn't exist, don't omit an error
+			return false, nil
+		}
+		return false, errorutils.CheckError(err)
+	}
+	return !fileInfo.IsDir(), nil
 }
