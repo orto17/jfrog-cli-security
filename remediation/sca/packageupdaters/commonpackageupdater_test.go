@@ -101,6 +101,30 @@ func TestUpdateDependency(t *testing.T) {
 				fixSupported:       true,
 				descriptorsToCheck: []string{"Pipfile"},
 			},
+			{
+				fixDetails:   createFixDetails(techutils.Uv, "urllib3", "", "1.25.9", false, ""),
+				fixSupported: false,
+			},
+			{
+				fixDetails:         createFixDetails(techutils.Uv, "pyjwt", "", "2.4.0", true, ""),
+				fixSupported:       true,
+				descriptorsToCheck: []string{"pyproject.toml"},
+			},
+			{
+				testcaseInfo:       "dependency-groups",
+				fixDetails:         createFixDetails(techutils.Uv, "pyjwt", "", "2.4.0", true, ""),
+				fixSupported:       true,
+				projectSubDir:      "dependency-groups",
+				descriptorsToCheck: []string{"pyproject.toml"},
+			},
+			{
+				testcaseInfo:               "workspace-member-not-found-safe-failure",
+				fixDetails:                 createFixDetails(techutils.Uv, "pyjwt", "", "2.4.0", true, ""),
+				fixSupported:               true,
+				projectSubDir:              "workspace",
+				errorExpected:              true,
+				descriptorToVerifyNoChange: "pyproject.toml",
+			},
 		},
 
 		// Npm test cases
@@ -166,6 +190,22 @@ func TestUpdateDependency(t *testing.T) {
 				fixSupported:       true,
 				testDirName:        "npm",
 				descriptorsToCheck: []string{"package.json"},
+			},
+		},
+
+		// Nuget test cases - exercises the real 'dotnet' CLI (unlike the fake-dotnet unit tests in
+		// nugetpackageupdater_test.go), to confirm '--force-evaluate --no-dependencies' are flags
+		// a real restore actually accepts and acts on.
+		{
+			{
+				fixDetails:   createFixDetails(techutils.Nuget, "Newtonsoft.Json", "", "13.0.1", false, ""),
+				fixSupported: false,
+			},
+			{
+				fixDetails:                createFixDetails(techutils.Nuget, "Newtonsoft.Json", "", "13.0.1", true, "Remediation.csproj"),
+				fixSupported:              true,
+				descriptorsToCheck:        []string{"Remediation.csproj"},
+				lockFileToVerifyItsChange: "packages.lock.json",
 			},
 		},
 	}
@@ -266,8 +306,13 @@ func assertFixVersionInPackageDescriptor(t *testing.T, test dependencyFixTest, p
 		assert.NoError(t, err)
 
 		assert.Contains(t, string(file), test.fixDetails.SuggestedFixedVersion)
-		// Verify that case-sensitive packages in python are lowered
-		assert.Contains(t, string(file), strings.ToLower(test.fixDetails.ImpactedDependencyName))
+		expectedName := test.fixDetails.ImpactedDependencyName
+		switch test.fixDetails.Technology {
+		case techutils.Pip, techutils.Poetry, techutils.Pipenv:
+			// Python package names are normalized to lowercase on fix.
+			expectedName = strings.ToLower(expectedName)
+		}
+		assert.Contains(t, string(file), expectedName)
 	}
 }
 
@@ -982,9 +1027,10 @@ func TestGetCompatiblePackageUpdater(t *testing.T) {
 		{techutils.Pip, true, &PythonPackageUpdater{}},
 		{techutils.Poetry, true, &PythonPackageUpdater{}},
 		{techutils.Pipenv, true, &PythonPackageUpdater{}},
+		{techutils.Nuget, true, &NugetPackageUpdater{}},
+		{techutils.Uv, true, &PythonPackageUpdater{}},
 		{techutils.Yarn, true, &YarnPackageUpdater{}},
 		{techutils.Gradle, false, nil},
-		{techutils.Nuget, false, nil},
 		{techutils.Conan, false, nil},
 	}
 	for _, tt := range tests {
